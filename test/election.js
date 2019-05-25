@@ -19,5 +19,17 @@ contract("Election", function(accounts) {
 		});
 	});
 
+	it("allow a user to cast a vote", function() {
+		return Election.deployed().then(function(instance) {
+			electionInstance =  instance;
+			candidateId = 1;
+			return electionInstance.vote(1, { from: accounts[0] });
+		}).then(function(receipt){
+            return electionInstance.voters(accounts[0]);
+		}).then(function(voted) {
+			assert(voted, "the voter is marked as voted");
+		})
+	});
+
 });
 
