@@ -2,12 +2,13 @@ App = {
   web3Provider: null,
   contracts: {},
   account: '0x0',
+  hasVoted: false,
 
-  init: function() {
-    return App.initWeb3();
+  init: async function() {
+    return await App.initWeb3();
   },
 
-  initWeb3: function() {
+  initWeb3: async function() {
    if (typeof web3 !== 'undefined') {
     App.web3Provider = web3.currentProvider;
     web3 = new Web3(web3.currentProvider);
@@ -27,7 +28,22 @@ App = {
     $.getJSON('Election.json', function(election) {
       App.contracts.Election = TruffleContract(election);
       App.contracts.Election.setProvider(App.web3Provider);
+
+      App.listenForEvents();
+
       return App.render();
+    });
+  },
+
+  listenForEvents: function() {
+    App.contracts.Election.deployed().then(function(instance) {
+      instance.votedEvent({}, {
+        fromBlock: 0,
+        toBlock: 'latest'
+      }).watch(function(error, event) {
+        console.log("event triggered", event);
+        App.render();
+      });
     });
   },
 
