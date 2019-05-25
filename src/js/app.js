@@ -12,9 +12,6 @@ App = {
     App.web3Provider = web3.currentProvider;
     web3 = new Web3(web3.currentProvider);
 
-    var version = web3.version;
-    console.log(version);
-
     //prompt user to enable metamask
     web3.currentProvider.enable();
 
@@ -53,10 +50,8 @@ App = {
     // Load contract data
     App.contracts.Election.deployed().then(function(instance) {
       electionInstance = instance;
-      console.log(instance);
       return electionInstance.candidatesCount();
     }).then(function(candidatesCount) {
-      console.log(web3.fromWei(candidatesCount.toNumber(), "ether" ) );
       var candidatesResults = $("#candidatesResults");
       candidatesResults.empty();
 
@@ -73,13 +68,33 @@ App = {
           var candidateTemplate = "<tr><th>" + id + "</th><td>" + name + "</td><td>" + voteCount + "</td></tr>"
           candidatesResults.append(candidateTemplate);
 
+          var candidateOption = "<option value='" + id + "' >" + name + "</ option"
+          candidatesSelect.append(candidateOption);
         });
+      }
+
+      return electionInstance.voters(App.account);
+    }).then(function(hasVoted) {
+      if (hasVoted) {
+        $('form').hide();
       }
       
       loader.hide();
       content.show();
     }).catch(function(error) {
       console.warn(error);
+    });
+  },
+
+  castVote: function() {
+    var candidateId = $('#candidatesSelect').val();
+    App.contracts.Election.deployed().then(function(instance) {
+      return instance.vote(candidateId, { from: App.account });
+    }).then(function(result) {
+      $("#content").hide();
+      $("#loader")/show();
+    }).catch(function(error) {
+      console.error(error);
     });
   }
 
